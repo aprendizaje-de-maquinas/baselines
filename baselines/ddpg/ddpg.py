@@ -42,6 +42,7 @@ def learn(network, env,
           tau=0.01,
           eval_env=None,
           param_noise_adaption_interval=50,
+          target_velocity=None,
           **network_kwargs):
 
     set_global_seeds(seed)
@@ -270,6 +271,9 @@ def learn(network, env,
             if eval_env and hasattr(eval_env, 'get_state'):
                 with open(os.path.join(logdir, 'eval_env_state.pkl'), 'wb') as f:
                     pickle.dump(eval_env.get_state(), f)
+
+    memory.save(target_velocity)
+    #np.save('/home/robot/projects/baselines/target_velocity_4', episode_rewards_history)
 
 
     return agent

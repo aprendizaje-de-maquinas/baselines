@@ -61,7 +61,7 @@ def train(args, extra_args):
     alg_kwargs = get_learn_function_defaults(args.alg, env_type)
     alg_kwargs.update(extra_args)
 
-    env = build_env(args)
+    env, env_kwargs = build_env(args)
     if args.save_video_interval != 0:
         env = VecVideoRecorder(env, osp.join(logger.get_dir(), "videos"), record_video_trigger=lambda x: x % args.save_video_interval == 0, video_length=args.save_video_length)
 
@@ -73,6 +73,8 @@ def train(args, extra_args):
 
     print('Training {} on {}:{} with arguments \n{}'.format(args.alg, env_type, env_id, alg_kwargs))
 
+    alg_kwargs['target_velocity'] = env_kwargs['target_velocity']
+    
     model = learn(
         env=env,
         seed=seed,
@@ -110,12 +112,27 @@ def build_env(args):
         get_session(config=config)
 
         flatten_dict_observations = alg not in {'her'}
-        env = make_vec_env(env_id, env_type, args.num_env or 1, seed, reward_scale=args.reward_scale, flatten_dict_observations=flatten_dict_observations)
+
+        try:
+            import json
+            env_id = json.loads(env_id)
+
+            env_name = env_id['env_name']
+            env_kwargs = dict([ (k, env_id[k]) for k in env_id if k != 'env_name'])
+
+            env_id = env_name
+            env_type = None
+        except:
+            env_kwargs = {}
+            pass
+        
+        print(env_id, env_type)
+        env = make_vec_env(env_id, env_type, args.num_env or 1, seed, reward_scale=args.reward_scale, flatten_dict_observations=flatten_dict_observations, env_kwargs=env_kwargs)
 
         if env_type == 'mujoco':
             env = VecNormalize(env, use_tf=True)
 
-    return env
+    return env, env_kwargs
 
 
 def get_env_type(args):

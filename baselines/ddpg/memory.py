@@ -81,3 +81,14 @@ class Memory(object):
     @property
     def nb_entries(self):
         return len(self.observations0)
+
+
+    def save(self, postfix):
+        to_save = {
+            'obs': self.observations0,
+            'act': self.actions,
+            'rew': self.rewards,
+            'terminal': self.terminals1,
+            'obs2': self.observations1,
+        }
+        np.savez('/home/robot/projects/baselines/target_velocity_{}'.format(postfix), to_save)
